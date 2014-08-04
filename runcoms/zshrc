@@ -12,3 +12,6 @@ fi
 
 # Customize to your needs...
 
+export PATH=$PATH:~/.cabal/bin:~/.xmonad/bin
+alias vi="vim"
+export EDITOR="vim"

@@ -1,0 +1,71 @@
+#
+# A simple theme that displays relevant, contextual information.
+#
+# Authors:
+#   Sorin Ionescu <sorin.ionescu@gmail.com>
+#   Matt Cillo
+
+# Load dependencies.
+pmodload 'helper'
+
+function prompt_killingfield_pwd {
+  local pwd="${PWD/#$HOME/~}"
+
+  if [[ "$pwd" == (#m)[/~] ]]; then
+    echo "$MATCH"
+    unset MATCH
+  else
+    echo "${${${(@j:/:M)${(@s:/:)pwd}##.#?}:h}%/}/${pwd:t}"
+  fi
+}
+
+function prompt_killingfield_precmd {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+
+  # Format PWD.
+  _prompt_killingfield_pwd="%(?:%F{cyan}$(prompt_killingfield_pwd)%f :%F{red}$(prompt_killingfield_pwd)%f )"
+
+  # Get Git repository information.
+  if (( $+functions[git-info] )); then
+    git-info
+  fi
+}
+
+function prompt_killingfield_setup {
+  setopt LOCAL_OPTIONS
+  unsetopt XTRACE KSH_ARRAYS
+  prompt_opts=(cr percent subst)
+
+  # Load required functions.
+  autoload -Uz add-zsh-hook
+
+  # Add hook for calling git-info before each command.
+  add-zsh-hook precmd prompt_killingfield_precmd
+
+  # Set git-info parameters.
+  zstyle ':prezto:module:git:info' verbose 'yes'
+  zstyle ':prezto:module:git:info:action' format '%%B%F{yellow}%s%f%%b'
+  zstyle ':prezto:module:git:info:added' format '%B%F{green}✚%f%%b'
+  zstyle ':prezto:module:git:info:ahead' format '%B%F{yellow}⬆%f%%b'
+  zstyle ':prezto:module:git:info:behind' format '%%B%F{yellow}⬇%f%%b'
+  zstyle ':prezto:module:git:info:branch' format '%F{green}%b%f'
+  zstyle ':prezto:module:git:info:commit' format '%F{green}%.7c%f'
+  zstyle ':prezto:module:git:info:deleted' format '%%B%F{red}✖%f%%b'
+  zstyle ':prezto:module:git:info:modified' format '%%B%F{blue}✱%f%%b'
+  zstyle ':prezto:module:git:info:position' format '%F{red}%p%f'
+  zstyle ':prezto:module:git:info:renamed' format '%%B%F{magenta}➜%f%%b'
+  zstyle ':prezto:module:git:info:stashed' format '%%B%F{cyan}✭%f%%b'
+  zstyle ':prezto:module:git:info:unmerged' format '%%B%F{yellow}═%f%%b'
+  zstyle ':prezto:module:git:info:untracked' format '%%B%F{white}◼%f%%b'
+  zstyle ':prezto:module:git:info:keys' format \
+    'prompt' ' %F{blue}git:(%f$(coalesce "%b" "%p" "%c") %A%B%S%a%d%m%r%U%u%F{blue})%f%s'
+
+  # Define prompts.
+  PROMPT='%F{cyan}${_prompt_killingfield_pwd}%f${git_info:+${(e)git_info[prompt]}} %F{cyan}λ%f '
+  RPROMPT='%F{cyan}%m%f'
+  SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
+}
+
+prompt_killingfield_setup "$@"
+
